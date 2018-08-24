@@ -3,56 +3,96 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
-  <title>Dom store</title>
+  <title>加载更多</title>
   <style>
-	*{
-		margin:0 auto;
-		padding:0;		
-		}
-	#list li{	
-		height:30px;
-		line-height: 30px;
+  	*{
+  		margin:0;
+  		padding:0;
+  	}
+  	#news-list li{
+		height:34px;
+		line-height:34px;
+		margin: 20px;
 		border:1px solid #ccc;
-		margin:30px;
-		list-style: none;
-	}
-	#more{
-	margin:0 auto;
-	display:block;
-	text-align:center;
-	color:red;
-	text-decoration: none;
-	width:160px;
-	height:30px;
-	line-height: 30px;
-	border:1px solid green;
-	}
-	#more:hover{
-		background: green;
-	}
+		border-radius: 3px;
+		list-style-type:none;
+  	}
+  	#load-more{
+  		width: 140px;
+  		border:1px solid #ccc;
+  		background: green;
+  		border-radius: 3px;
+  		height:34px;
+  		line-height: 34px;
+  		text-align: center;
+  		display: block;
+  		margin:0 auto;
+  		cursor: pointer;
+  	}
   </style>
+
 </head>
 <body>
-<ul id="list">
-	<li>内容1</li>
-	<li>内容1</li>
+<ul id="news-list">
 </ul>
-<a id="more">加载更多</a>
+<a id="load-more" href="javascript:void(0)">加载更多</a>
 <script type="text/javascript">
-	var list=document.getElementById("list");
-	var more=document.getElementById("more");
-	more.addEventListener("click",function(){
-		var xhr=new XMLHttpRequest();
-		xhr.open("get","/Desktop/loadmore?index=0&length=5",true);
-		xhr.onreadystatechange=function(){
-			if(xhr.readState===4&&xhr.status===200||xhr.status===304){
-				var result=JSON.parse(xhr.responseText);
-				cosole.log(result);
-			}
-		}
-		xhr.send();
+	var news=document.getElementById("news-list");
+	var btn=document.getElementById("load-more");
+	console.log(btn);
+	var pageIndex=0;
+	btn.addEventListener('click',function(){
+		getdata(function(info){
+			rendpage(info)		//匿名函数，在数据获取完成后执行	
+			pageIndex=pageIndex+5;	//页面加载五个Li后，点击继续+5执行。
+		})
 	})
-	
+
+		function getdata(callback){
+			//callback函数，即为得到数据后，执行函数（rendpage函数），渲染页面
+			ajax({
+				type:'get',
+				url:'/loadmore',
+				data:{
+					index:pageIndex,
+					length:5
+				},
+				onSuccess:callback
+				//onError:function(){
+				//	console.log("error")
+				//}
+			})
+			}
+		function rendpage(info){
+			var fragment=document.createDocumentFragment();
+		for(var i=0;i<info.length;i++){
+			var node=document.createElement("li");
+			node.innerText=info[i];
+			fragment.appendChild(node);
+		}
+		news.appendChild(fragment);		
+		}
+
+		function ajax(options){
+		var xml=new XMLHttpRequest();
+			var query="?";
+			for(key in options.data){
+				query+=key+"="+options.data[key]+"&";
+			}
+			query=query.substr(0,query.length-1);//因为字符串（？...&）拼接最后一位是&
+			console.log
+			(query)
+			xml.open(options.type,options.url+query,true);
+			xml.onreadystatechange=function(){
+  			if (xml.readyState==4 && xml.status==200){
+				var result=JSON.parse(xml.responseText);
+				//console.log(result)
+				options.onSuccess(result);//数据到来之后执行下一步要执行的函数（rendpage函数即渲染生成页面）
+				
+    		}
+		}
+		xml.send();
+	}
 </script>
 </body>
 </html>
